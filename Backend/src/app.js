@@ -13,6 +13,9 @@ import attendanceAdminRoutes from "./routes/admin/attendanceAdminRoutes.js";
 import leaveRoutes from "./routes/employee/leaveRoutes.js";
 import leaveAdminRoutes from "./routes/admin/leaveAdminRoutes.js";
 
+import salaryAdminRoutes from "./routes/admin/salaryAdminRoutes.js";
+import salaryRoutes from "./routes/employee/salaryRoutes.js";
+
 const app = express();
 
 app.use(cors());
@@ -27,6 +30,9 @@ app.use("/api/employee/attendance", attendanceRoutes);
 app.use("/api/admin/attendance", attendanceAdminRoutes);
 app.use("/api/employee/leaves", leaveRoutes);
 app.use("/api/admin/leaves", leaveAdminRoutes);
+
+app.use("/api/admin/salaries", salaryAdminRoutes);
+app.use("/api/employee/salary", salaryRoutes);
 
 app.get("/api/health", async (req, res) => {
   try {
