@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "node src/server.js",
-    "start": "node src/server.js"
+    "start": "node src/server.js",
+    "seed:admin": "node src/scripts/createInitialAdmin.js"
   },
   "keywords": [],
   "author": "",

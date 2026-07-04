@@ -3,10 +3,24 @@ import cors from "cors";
 
 import db from "./config/db.js";
 
+import authRoutes from "./routes/authRoutes.js";
+import employeeRoutes from "./routes/employeeRoutes.js";
+
+import employeeAdminRoutes from "./routes/admin/employeeAdminRoutes.js";
+import employeeProfileRoutes from "./routes/employee/employeeProfileRoutes.js";
+import attendanceRoutes from "./routes/employee/attendanceRoutes.js";
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/auth", authRoutes);
+app.use("/api/employees", employeeRoutes);
+
+app.use("/api/admin/employees", employeeAdminRoutes);
+app.use("/api/employee", employeeProfileRoutes);
+app.use("/api/employee/attendance", attendanceRoutes);
 
 app.get("/api/health", async (req, res) => {
   try {
