@@ -29,3 +29,17 @@ A full-stack Human Resource Management System built using React, Tailwind CSS, N
 - MySQL
 - JWT
 - bcryptjs
+
+## Demo Credentials
+
+### Admin Access
+
+- Login ID: `OIRISH20240001`
+- Password: `RiyaAdmin@123`
+
+### Employee Access
+
+- Login ID: `OIJODO20260001`
+- Password: `JohnNew@123`
+
+> These accounts contain fictional demonstration data and are intended only for project evaluation.
