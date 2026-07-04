@@ -9,6 +9,7 @@ import employeeRoutes from "./routes/employeeRoutes.js";
 import employeeAdminRoutes from "./routes/admin/employeeAdminRoutes.js";
 import employeeProfileRoutes from "./routes/employee/employeeProfileRoutes.js";
 import attendanceRoutes from "./routes/employee/attendanceRoutes.js";
+import attendanceAdminRoutes from "./routes/admin/attendanceAdminRoutes.js";
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use("/api/employees", employeeRoutes);
 app.use("/api/admin/employees", employeeAdminRoutes);
 app.use("/api/employee", employeeProfileRoutes);
 app.use("/api/employee/attendance", attendanceRoutes);
+app.use("/api/admin/attendance", attendanceAdminRoutes);
 
 app.get("/api/health", async (req, res) => {
   try {
