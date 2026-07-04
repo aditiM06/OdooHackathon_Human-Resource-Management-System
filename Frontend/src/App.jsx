@@ -6,7 +6,7 @@ import {
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
-// Authentication pages
+// Authentication
 import Login from "./pages/Login";
 import ChangePassword from "./pages/ChangePassword";
 
@@ -25,14 +25,15 @@ import AdminSalaries from "./pages/admin/AdminSalaries";
 // Employee pages
 import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
 import EmployeeAttendance from "./pages/employee/EmployeeAttendance";
+import EmployeeLeaves from "./pages/employee/EmployeeLeaves";
+import EmployeeSalary from "./pages/employee/EmployeeSalary";
+import EmployeeProfile from "./pages/employee/EmployeeProfile";
 
 function App() {
   return (
     <Routes>
-      {/* Public routes */}
       <Route path="/login" element={<Login />} />
 
-      {/* Authenticated password-change route */}
       <Route element={<ProtectedRoute />}>
         <Route
           path="/change-password"
@@ -40,7 +41,6 @@ function App() {
         />
       </Route>
 
-      {/* Admin and HR routes */}
       <Route
         element={
           <ProtectedRoute allowedRoles={["ADMIN", "HR"]} />
@@ -79,7 +79,6 @@ function App() {
         </Route>
       </Route>
 
-      {/* Employee routes */}
       <Route
         element={
           <ProtectedRoute allowedRoles={["EMPLOYEE"]} />
@@ -95,10 +94,24 @@ function App() {
             path="/employee/attendance"
             element={<EmployeeAttendance />}
           />
+
+          <Route
+            path="/employee/leaves"
+            element={<EmployeeLeaves />}
+          />
+
+          <Route
+            path="/employee/salary"
+            element={<EmployeeSalary />}
+          />
+
+          <Route
+            path="/employee/profile"
+            element={<EmployeeProfile />}
+          />
         </Route>
       </Route>
 
-      {/* Default routes */}
       <Route
         path="/"
         element={<Navigate to="/login" replace />}

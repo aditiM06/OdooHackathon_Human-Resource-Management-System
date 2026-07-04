@@ -1,4 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faArrowRightFromBracket,
+  faArrowRightToBracket,
+  faClock,
+} from "@fortawesome/free-solid-svg-icons";
 
 import {
   checkInEmployee,
@@ -13,7 +25,8 @@ function EmployeeAttendance() {
 
   const [attendance, setAttendance] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -23,7 +36,7 @@ function EmployeeAttendance() {
       setError("");
 
       const data = await getEmployeeAttendance(token);
-      setAttendance(data.attendance);
+      setAttendance(data.attendance || []);
     } catch (requestError) {
       setError(requestError.message);
     } finally {
@@ -41,8 +54,7 @@ function EmployeeAttendance() {
     return (
       attendance.find(
         (record) =>
-          getDateKey(new Date(record.attendanceDate)) ===
-          todayKey
+          getDateKey(record.attendanceDate) === todayKey
       ) || null
     );
   }, [attendance]);
@@ -54,8 +66,8 @@ function EmployeeAttendance() {
       setMessage("");
 
       const data = await checkInEmployee(token);
+      setMessage(data.message || "Checked in successfully");
 
-      setMessage(data.message);
       await loadAttendance();
     } catch (requestError) {
       setError(requestError.message);
@@ -71,8 +83,10 @@ function EmployeeAttendance() {
       setMessage("");
 
       const data = await checkOutEmployee(token);
+      setMessage(
+        data.message || "Checked out successfully"
+      );
 
-      setMessage(data.message);
       await loadAttendance();
     } catch (requestError) {
       setError(requestError.message);
@@ -81,54 +95,59 @@ function EmployeeAttendance() {
     }
   }
 
+  const hasCheckedIn = Boolean(todayRecord?.checkInAt);
+  const hasCheckedOut = Boolean(todayRecord?.checkOutAt);
+
   if (isLoading) {
     return (
       <main className="p-6 lg:p-8">
-        <p className="text-slate-400">
+        <p className="text-slate-500">
           Loading attendance...
         </p>
       </main>
     );
   }
 
-  const hasCheckedIn = Boolean(todayRecord?.checkInAt);
-  const hasCheckedOut = Boolean(todayRecord?.checkOutAt);
-
   return (
     <main className="p-6 lg:p-8">
       <section className="mb-8">
-        <p className="text-sm font-medium text-fuchsia-400">
+        <p className="text-sm font-semibold text-sky-600">
           Attendance
         </p>
 
-        <h1 className="mt-2 text-3xl font-bold">
+        <h1 className="mt-1 text-3xl font-bold text-slate-900">
           My Attendance
         </h1>
 
-        <p className="mt-2 text-slate-400">
-          Record your daily check-in and check-out.
+        <p className="mt-2 text-slate-500">
+          Record your daily check-in and check-out and
+          review previous entries.
         </p>
       </section>
 
       {error && (
-        <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       )}
 
       {message && (
-        <div className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-300">
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
           {message}
         </div>
       )}
 
-      <section className="grid gap-6 lg:grid-cols-[1fr_1.5fr]">
-        <article className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <p className="text-sm text-slate-400">
+      <section className="grid gap-6 lg:grid-cols-[0.8fr_1.7fr]">
+        <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+            <FontAwesomeIcon icon={faClock} />
+          </div>
+
+          <p className="mt-5 text-sm text-slate-500">
             Today
           </p>
 
-          <h2 className="mt-2 text-2xl font-bold">
+          <h2 className="mt-1 text-2xl font-bold text-slate-900">
             {formatDate(new Date())}
           </h2>
 
@@ -168,8 +187,12 @@ function EmployeeAttendance() {
               type="button"
               onClick={handleCheckIn}
               disabled={isSubmitting || hasCheckedIn}
-              className="rounded-lg bg-fuchsia-600 px-4 py-3 font-semibold text-white transition hover:bg-fuchsia-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-4 py-3 font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              <FontAwesomeIcon
+                icon={faArrowRightToBracket}
+              />
+
               {hasCheckedIn
                 ? "Checked in"
                 : isSubmitting
@@ -185,8 +208,12 @@ function EmployeeAttendance() {
                 !hasCheckedIn ||
                 hasCheckedOut
               }
-              className="rounded-lg border border-slate-700 px-4 py-3 font-semibold text-white transition hover:border-fuchsia-500 hover:text-fuchsia-300 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-3 font-semibold text-slate-700 transition hover:border-sky-300 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              <FontAwesomeIcon
+                icon={faArrowRightFromBracket}
+              />
+
               {hasCheckedOut
                 ? "Checked out"
                 : isSubmitting
@@ -196,71 +223,68 @@ function EmployeeAttendance() {
           </div>
         </article>
 
-        <article className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
-          <div className="border-b border-slate-800 p-6">
-            <h2 className="text-lg font-semibold">
-              Attendance history
+        <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 p-6">
+            <h2 className="text-lg font-bold text-slate-900">
+              Attendance History
             </h2>
 
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-slate-500">
               Your recorded attendance entries.
             </p>
           </div>
 
           {attendance.length === 0 ? (
-            <p className="p-6 text-sm text-slate-400">
+            <p className="p-6 text-sm text-slate-500">
               No attendance records available.
             </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
-                <thead className="bg-slate-950 text-slate-400">
+                <thead className="bg-slate-50 text-slate-500">
                   <tr>
                     <th className="px-5 py-4 font-medium">
                       Date
                     </th>
-
                     <th className="px-5 py-4 font-medium">
-                      Check-in
+                      Check In
                     </th>
-
                     <th className="px-5 py-4 font-medium">
-                      Check-out
+                      Check Out
                     </th>
-
                     <th className="px-5 py-4 font-medium">
                       Status
                     </th>
-
                     <th className="px-5 py-4 font-medium">
-                      Working time
+                      Working Time
                     </th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-slate-800">
+                <tbody className="divide-y divide-slate-200">
                   {attendance.map((record) => (
-                    <tr
-                      key={record.id}
-                      className="text-slate-200"
-                    >
-                      <td className="whitespace-nowrap px-5 py-4">
-                        {formatDate(record.attendanceDate)}
+                    <tr key={record.id}>
+                      <td className="whitespace-nowrap px-5 py-4 font-medium text-slate-900">
+                        {formatDate(
+                          record.attendanceDate
+                        )}
                       </td>
 
-                      <td className="whitespace-nowrap px-5 py-4">
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                         {formatTime(record.checkInAt)}
                       </td>
 
-                      <td className="whitespace-nowrap px-5 py-4">
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                         {formatTime(record.checkOutAt)}
                       </td>
 
                       <td className="px-5 py-4">
-                        <StatusBadge status={record.status} />
+                        <StatusBadge
+                          status={record.status}
+                        />
                       </td>
 
-                      <td className="whitespace-nowrap px-5 py-4">
+                      <td className="whitespace-nowrap px-5 py-4 text-slate-700">
                         {record.workingMinutes !== null &&
                         record.workingMinutes !== undefined
                           ? formatWorkingTime(
@@ -282,12 +306,12 @@ function EmployeeAttendance() {
 
 function AttendanceDetail({ label, value }) {
   return (
-    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-      <span className="text-sm text-slate-400">
+    <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+      <span className="text-sm text-slate-500">
         {label}
       </span>
 
-      <span className="text-sm font-semibold text-white">
+      <span className="text-sm font-semibold text-slate-900">
         {value}
       </span>
     </div>
@@ -296,70 +320,63 @@ function AttendanceDetail({ label, value }) {
 
 function StatusBadge({ status }) {
   const styles = {
-    PRESENT:
-      "bg-emerald-500/10 text-emerald-300",
-    ABSENT:
-      "bg-red-500/10 text-red-300",
-    HALF_DAY:
-      "bg-amber-500/10 text-amber-300",
-    LEAVE:
-      "bg-blue-500/10 text-blue-300",
+    PRESENT: "bg-emerald-50 text-emerald-700",
+    ABSENT: "bg-red-50 text-red-700",
+    HALF_DAY: "bg-amber-50 text-amber-700",
+    LEAVE: "bg-sky-50 text-sky-700",
   };
 
   return (
     <span
       className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
         styles[status] ||
-        "bg-slate-700 text-slate-300"
+        "bg-slate-100 text-slate-700"
       }`}
     >
-      {status}
+      {status || "UNKNOWN"}
     </span>
   );
 }
 
-function formatDate(dateValue) {
-  if (!dateValue) {
-    return "—";
-  }
+function formatDate(value) {
+  if (!value) return "—";
 
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
     timeZone: "Asia/Kolkata",
-  }).format(new Date(dateValue));
+  }).format(new Date(value));
 }
 
-function formatTime(dateValue) {
-  if (!dateValue) {
-    return "—";
-  }
+function formatTime(value) {
+  if (!value) return "—";
 
   return new Intl.DateTimeFormat("en-IN", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
     timeZone: "Asia/Kolkata",
-  }).format(new Date(dateValue));
+  }).format(new Date(value));
 }
 
 function formatWorkingTime(totalMinutes) {
-  const minutes = Number(totalMinutes);
-
+  const minutes = Number(totalMinutes) || 0;
   const hours = Math.floor(minutes / 60);
   const remainingMinutes = minutes % 60;
 
   return `${hours}h ${remainingMinutes}m`;
 }
 
-function getDateKey(dateValue) {
+function getDateKey(value) {
+  if (!value) return "";
+
   const parts = new Intl.DateTimeFormat("en-CA", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     timeZone: "Asia/Kolkata",
-  }).formatToParts(dateValue);
+  }).formatToParts(new Date(value));
 
   const values = Object.fromEntries(
     parts.map((part) => [part.type, part.value])

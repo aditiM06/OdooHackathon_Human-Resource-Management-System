@@ -1,4 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faCalendarCheck,
+  faClock,
+  faIdBadge,
+  faIndianRupeeSign,
+  faUser,
+} from "@fortawesome/free-solid-svg-icons";
 
 import {
   getEmployeeAttendance,
@@ -10,6 +19,7 @@ import {
 import { getAuthToken } from "../../utils/auth";
 
 function EmployeeDashboard() {
+  const navigate = useNavigate();
   const token = getAuthToken();
 
   const [dashboardData, setDashboardData] = useState({
@@ -41,10 +51,11 @@ function EmployeeDashboard() {
         ]);
 
         setDashboardData({
-          profile: profileResponse.employee,
-          attendance: attendanceResponse.attendance,
-          leaveRequests: leaveResponse.leaveRequests,
-          currentSalary: salaryResponse.currentSalary,
+          profile: profileResponse.employee || null,
+          attendance: attendanceResponse.attendance || [],
+          leaveRequests: leaveResponse.leaveRequests || [],
+          currentSalary:
+            salaryResponse.currentSalary || null,
         });
       } catch (requestError) {
         setError(requestError.message);
@@ -56,26 +67,6 @@ function EmployeeDashboard() {
     loadDashboard();
   }, [token]);
 
-  if (isLoading) {
-    return (
-      <main className="p-6 lg:p-8">
-        <p className="text-slate-400">
-          Loading your dashboard...
-        </p>
-      </main>
-    );
-  }
-
-  if (error) {
-    return (
-      <main className="p-6 lg:p-8">
-        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-5 text-red-300">
-          {error}
-        </div>
-      </main>
-    );
-  }
-
   const {
     profile,
     attendance,
@@ -83,14 +74,16 @@ function EmployeeDashboard() {
     currentSalary,
   } = dashboardData;
 
-  const todayKey = getDateKey(new Date());
+  const todayAttendance = useMemo(() => {
+    const todayKey = getDateKey(new Date());
 
-const todayAttendance =
-  attendance.find(
-    (record) =>
-      getDateKey(new Date(record.attendanceDate)) ===
-      todayKey
-  ) || null;
+    return (
+      attendance.find(
+        (record) =>
+          getDateKey(record.attendanceDate) === todayKey
+      ) || null
+    );
+  }, [attendance]);
 
   const pendingLeaveCount = leaveRequests.filter(
     (request) => request.status === "PENDING"
@@ -100,134 +93,211 @@ const todayAttendance =
     (request) => request.status === "APPROVED"
   ).length;
 
-  const grossSalary = currentSalary
-    ? Number(currentSalary.basicSalary) +
-      Number(currentSalary.housingAllowance) +
-      Number(currentSalary.transportAllowance) +
-      Number(currentSalary.medicalAllowance) +
-      Number(currentSalary.otherAllowance)
-    : null;
+  const salary = normalizeSalary(currentSalary);
+
+  const monthlyGross =
+    salary.basicSalary +
+    salary.housingAllowance +
+    salary.transportAllowance +
+    salary.medicalAllowance +
+    salary.otherAllowance;
+
+  const monthlyNet = monthlyGross - salary.deductions;
+
+  if (isLoading) {
+    return (
+      <main className="p-6 lg:p-8">
+        <p className="text-slate-500">
+          Loading your dashboard...
+        </p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="p-6 lg:p-8">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-red-700">
+          {error}
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="p-6 lg:p-8">
-      <section className="mb-8">
-        <p className="text-sm font-medium text-fuchsia-400">
-          Employee Dashboard
-        </p>
+      <section className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-sky-600">
+            Employee Dashboard
+          </p>
 
-        <h1 className="mt-2 text-3xl font-bold">
-          Welcome, {profile?.firstName} {profile?.lastName}
-        </h1>
+          <h1 className="mt-1 text-3xl font-bold text-slate-900">
+            Welcome, {profile?.firstName}{" "}
+            {profile?.lastName}
+          </h1>
 
-        <p className="mt-2 text-slate-400">
-          {profile?.designation}
-          {profile?.departmentName
-            ? ` · ${profile.departmentName}`
-            : ""}
-        </p>
+          <p className="mt-2 text-slate-500">
+            {profile?.designation || "Employee"}
+            {profile?.departmentName
+              ? ` · ${profile.departmentName}`
+              : ""}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate("/employee/profile")}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:border-sky-300 hover:text-sky-700"
+        >
+          <FontAwesomeIcon icon={faUser} />
+          View Profile
+        </button>
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <DashboardCard
-          title="Employee ID"
+        <SummaryCard
+          icon={faIdBadge}
+          label="Employee ID"
           value={profile?.loginId || "Not available"}
-          description={profile?.employmentStatus}
+          description={
+            profile?.employmentStatus || "Employee"
+          }
         />
 
-        <DashboardCard
-          title="Today's Attendance"
+        <SummaryCard
+          icon={faClock}
+          label="Today's Attendance"
           value={
             todayAttendance?.status || "Not checked in"
           }
           description={
             todayAttendance?.checkInAt
-              ? `Check-in recorded`
-              : "No attendance record today"
+              ? `Check-in: ${formatTime(
+                  todayAttendance.checkInAt
+                )}`
+              : "No attendance recorded"
           }
         />
 
-        <DashboardCard
-          title="Pending Leaves"
-          value={pendingLeaveCount}
-          description={`${approvedLeaveCount} approved request(s)`}
+        <SummaryCard
+          icon={faCalendarCheck}
+          label="Time Off"
+          value={`${pendingLeaveCount} pending`}
+          description={`${approvedLeaveCount} approved`}
         />
 
-        <DashboardCard
-          title="Gross Salary"
+        <SummaryCard
+          icon={faIndianRupeeSign}
+          label="Monthly Net Salary"
           value={
-            grossSalary === null
-              ? "Not assigned"
-              : `₹${grossSalary.toLocaleString("en-IN")}`
+            currentSalary
+              ? formatCurrency(monthlyNet)
+              : "Not assigned"
           }
           description="Current salary structure"
         />
       </section>
 
       <section className="mt-8 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <h2 className="text-lg font-semibold">
-            Recent attendance
-          </h2>
+        <article className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-200 p-5">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">
+                Recent Attendance
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Your latest attendance records.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/employee/attendance")
+              }
+              className="text-sm font-semibold text-sky-600 hover:text-sky-800"
+            >
+              View all
+            </button>
+          </div>
 
           {attendance.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-400">
+            <p className="p-6 text-sm text-slate-500">
               No attendance records available.
             </p>
           ) : (
-            <div className="mt-4 space-y-3">
+            <div className="divide-y divide-slate-200">
               {attendance.slice(0, 5).map((record) => (
                 <div
                   key={record.id}
-                  className="flex items-center justify-between rounded-lg bg-slate-950 p-4"
+                  className="flex items-center justify-between gap-4 p-5"
                 >
                   <div>
-                    <p className="font-medium">
+                    <p className="font-semibold text-slate-900">
                       {formatDate(record.attendanceDate)}
                     </p>
 
-                    <p className="text-xs text-slate-400">
+                    <p className="mt-1 text-xs text-slate-500">
                       {record.workingMinutes
-                        ? `${record.workingMinutes} working minutes`
-                        : "Working time not completed"}
+                        ? formatWorkingTime(
+                            record.workingMinutes
+                          )
+                        : "Working time unavailable"}
                     </p>
                   </div>
 
-                  <span className="rounded-full bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold text-fuchsia-300">
-                    {record.status}
-                  </span>
+                  <StatusBadge status={record.status} />
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </article>
 
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <h2 className="text-lg font-semibold">
-            Recent leave requests
-          </h2>
+        <article className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-200 p-5">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">
+                Recent Time Off
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Your latest leave requests.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/employee/leaves")
+              }
+              className="text-sm font-semibold text-sky-600 hover:text-sky-800"
+            >
+              View all
+            </button>
+          </div>
 
           {leaveRequests.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-400">
+            <p className="p-6 text-sm text-slate-500">
               No leave requests available.
             </p>
           ) : (
-            <div className="mt-4 space-y-3">
+            <div className="divide-y divide-slate-200">
               {leaveRequests.slice(0, 5).map((request) => (
                 <div
                   key={request.id}
-                  className="rounded-lg bg-slate-950 p-4"
+                  className="p-5"
                 >
                   <div className="flex items-center justify-between gap-4">
-                    <p className="font-medium">
+                    <p className="font-semibold text-slate-900">
                       {request.leaveTypeName}
                     </p>
 
-                    <span className="text-xs font-semibold text-fuchsia-300">
-                      {request.status}
-                    </span>
+                    <StatusBadge status={request.status} />
                   </div>
 
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm text-slate-500">
                     {formatDate(request.startDate)} to{" "}
                     {formatDate(request.endDate)}
                   </p>
@@ -235,20 +305,29 @@ const todayAttendance =
               ))}
             </div>
           )}
-        </div>
+        </article>
       </section>
     </main>
   );
 }
 
-function DashboardCard({ title, value, description }) {
+function SummaryCard({
+  icon,
+  label,
+  value,
+  description,
+}) {
   return (
-    <article className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <p className="text-sm text-slate-400">
-        {title}
+    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
+        <FontAwesomeIcon icon={icon} />
+      </div>
+
+      <p className="mt-4 text-sm text-slate-500">
+        {label}
       </p>
 
-      <p className="mt-3 break-words text-2xl font-bold">
+      <p className="mt-2 break-words text-2xl font-bold text-slate-900">
         {value}
       </p>
 
@@ -261,27 +340,116 @@ function DashboardCard({ title, value, description }) {
   );
 }
 
-function formatDate(dateValue) {
-  if (!dateValue) {
-    return "Not available";
+function StatusBadge({ status }) {
+  const styles = {
+    PRESENT: "bg-emerald-50 text-emerald-700",
+    ABSENT: "bg-red-50 text-red-700",
+    HALF_DAY: "bg-amber-50 text-amber-700",
+    LEAVE: "bg-sky-50 text-sky-700",
+    APPROVED: "bg-emerald-50 text-emerald-700",
+    REJECTED: "bg-red-50 text-red-700",
+    PENDING: "bg-amber-50 text-amber-700",
+  };
+
+  return (
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+        styles[status] ||
+        "bg-slate-100 text-slate-700"
+      }`}
+    >
+      {status || "UNKNOWN"}
+    </span>
+  );
+}
+
+function normalizeSalary(salary) {
+  if (!salary) {
+    return {
+      basicSalary: 0,
+      housingAllowance: 0,
+      transportAllowance: 0,
+      medicalAllowance: 0,
+      otherAllowance: 0,
+      deductions: 0,
+    };
   }
+
+  return {
+    basicSalary: Number(
+      salary.basicSalary ?? salary.basic_salary ?? 0
+    ),
+    housingAllowance: Number(
+      salary.housingAllowance ??
+        salary.housing_allowance ??
+        0
+    ),
+    transportAllowance: Number(
+      salary.transportAllowance ??
+        salary.transport_allowance ??
+        0
+    ),
+    medicalAllowance: Number(
+      salary.medicalAllowance ??
+        salary.medical_allowance ??
+        0
+    ),
+    otherAllowance: Number(
+      salary.otherAllowance ??
+        salary.other_allowance ??
+        0
+    ),
+    deductions: Number(salary.deductions ?? 0),
+  };
+}
+
+function formatDate(value) {
+  if (!value) return "—";
 
   return new Intl.DateTimeFormat("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
     timeZone: "Asia/Kolkata",
-  }).format(new Date(dateValue));
+  }).format(new Date(value));
 }
 
+function formatTime(value) {
+  if (!value) return "—";
 
-function getDateKey(dateValue) {
+  return new Intl.DateTimeFormat("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(value));
+}
+
+function formatWorkingTime(totalMinutes) {
+  const minutes = Number(totalMinutes) || 0;
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  return `${hours}h ${remainingMinutes}m`;
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number(value) || 0);
+}
+
+function getDateKey(value) {
+  if (!value) return "";
+
   const parts = new Intl.DateTimeFormat("en-CA", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     timeZone: "Asia/Kolkata",
-  }).formatToParts(dateValue);
+  }).formatToParts(new Date(value));
 
   const values = Object.fromEntries(
     parts.map((part) => [part.type, part.value])
