@@ -33,12 +33,12 @@ export async function createEmployee(req, res) {
       });
     }
 
-    const allowedRoles = ["HR", "EMPLOYEE"];
+    const allowedRoles = ["ADMIN", "HR", "EMPLOYEE"];
 
     if (!allowedRoles.includes(role)) {
       return res.status(400).json({
         success: false,
-        message: "Role must be HR or EMPLOYEE",
+        message: "Role must be ADMIN, HR or EMPLOYEE",
       });
     }
 

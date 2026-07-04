@@ -2,7 +2,6 @@ import { NavLink, Outlet, useNavigate } from "react-router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCalendarCheck,
-  faChartPie,
   faClock,
   faMoneyCheckDollar,
   faRightFromBracket,
@@ -16,13 +15,8 @@ import {
 
 const navigationItems = [
   {
-    label: "Dashboard",
-    path: "/admin/dashboard",
-    icon: faChartPie,
-  },
-  {
     label: "Employees",
-    path: "/admin/employees",
+    path: "/admin/dashboard",
     icon: faUsers,
   },
   {
@@ -31,7 +25,7 @@ const navigationItems = [
     icon: faClock,
   },
   {
-    label: "Leave Requests",
+    label: "Time Off",
     path: "/admin/leaves",
     icon: faCalendarCheck,
   },
@@ -53,19 +47,49 @@ function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
-      <header className="border-b border-slate-200 bg-white">
+      <header className="border-b border-slate-200 bg-white shadow-sm">
         <div className="flex min-h-16 items-center justify-between px-5 lg:px-8">
-          <div>
-            <h1 className="text-lg font-bold text-slate-900">
-              Human Resource Management System
-            </h1>
+          <div className="flex items-center gap-8">
+            <NavLink
+              to="/admin/dashboard"
+              className="flex items-center gap-3"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sky-600 font-bold text-white">
+                OI
+              </div>
 
-            <p className="text-xs text-slate-500">
-              Admin and HR Portal
-            </p>
+              <div className="hidden lg:block">
+                <p className="font-bold text-slate-900">
+                  HRMS
+                </p>
+
+                <p className="text-xs text-slate-500">
+                  Admin Portal
+                </p>
+              </div>
+            </NavLink>
+
+            <nav className="hidden items-center gap-1 md:flex">
+              {navigationItems.map((item) => (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
+                      isActive
+                        ? "bg-sky-50 text-sky-700"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    }`
+                  }
+                >
+                  <FontAwesomeIcon icon={item.icon} />
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-slate-800">
                 {user?.loginId}
@@ -76,48 +100,23 @@ function AdminLayout() {
               </p>
             </div>
 
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-sky-700">
+              RS
+            </div>
+
             <button
               type="button"
               onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+              title="Log out"
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-slate-500 transition hover:bg-red-50 hover:text-red-600"
             >
               <FontAwesomeIcon icon={faRightFromBracket} />
-              Log out
             </button>
           </div>
         </div>
       </header>
 
-      <div className="flex">
-        <aside className="hidden min-h-[calc(100vh-4rem)] w-64 border-r border-slate-200 bg-white p-4 md:block">
-          <nav className="space-y-1">
-            {navigationItems.map((item) => (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition ${
-                    isActive
-                      ? "bg-sky-100 text-sky-700"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                  }`
-                }
-              >
-                <FontAwesomeIcon
-                  icon={item.icon}
-                  className="w-5"
-                />
-
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="min-w-0 flex-1">
-          <Outlet />
-        </div>
-      </div>
+      <Outlet />
     </div>
   );
 }
