@@ -12,7 +12,13 @@ async function adminRequest(path, token, options = {}) {
     },
   });
 
-  const data = await response.json();
+  let data;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
 
   if (!response.ok) {
     throw new Error(
@@ -34,10 +40,54 @@ export function getEmployeeById(employeeId, token) {
   );
 }
 
+export function createEmployee(employeeData, token) {
+  return adminRequest("/api/employees", token, {
+    method: "POST",
+    body: JSON.stringify(employeeData),
+  });
+}
+
 export function getAllAttendance(token) {
   return adminRequest("/api/admin/attendance", token);
 }
 
 export function getAllLeaveRequests(token) {
   return adminRequest("/api/admin/leaves", token);
+}
+
+export function updateLeaveStatus(
+  leaveRequestId,
+  reviewData,
+  token
+) {
+  return adminRequest(
+    `/api/admin/leaves/${leaveRequestId}/status`,
+    token,
+    {
+      method: "PATCH",
+      body: JSON.stringify(reviewData),
+    }
+  );
+}
+
+export function getEmployeeSalaryHistory(employeeId, token) {
+  return adminRequest(
+    `/api/admin/salaries/${employeeId}`,
+    token
+  );
+}
+
+export function createSalaryStructure(
+  employeeId,
+  salaryData,
+  token
+) {
+  return adminRequest(
+    `/api/admin/salaries/${employeeId}`,
+    token,
+    {
+      method: "POST",
+      body: JSON.stringify(salaryData),
+    }
+  );
 }
